@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predição de Churn - Aplicativo Web</title>
+    <style>
+        :root {
+            --color-primary: #2180A1;
+            --color-primary-hover: #1a6580;
+            --color-success: #22C55E;
+            --color-danger: #EF4444;
+            --color-warning: #F59E0B;
+            --color-bg: #f9fafb;
+            --color-surface: #ffffff;
+            --color-border: #e5e7eb;
+            --color-text: #1f2937;
+            --color-text-light: #6b7280;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.5em;
+            color: var(--color-primary);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--color-text-light);
+            font-size: 1.1em;
+            margin: 0;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--color-surface);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--color-border);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 1.5em;
+            color: var(--color-primary);
+            border-bottom: 2px solid var(--color-primary);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--color-text);
+            font-size: 0.95em;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 1em;
+            background: var(--color-surface);
+            color: var(--color-text);
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(33, 128, 161, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        button {
+            background: var(--color-primary);
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .result-container {
+            display: none;
+        }
+
+        .result-container.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .result-box.churn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .result-box.no-churn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .result-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .result-prediction {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .result-probability {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .insight {
+            background: #f0f9ff;
+            border-left: 4px solid var(--color-primary);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .insight.warning {
+            background: #fef3c7;
+            border-left-color: var(--color-warning);
+        }
+
+        .insight.danger {
+            background: #fee2e2;
+            border-left-color: var(--color-danger);
+        }
+
+        .insight-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--color-text);
+        }
+
+        .insight-text {
+            color: var(--color-text-light);
+            font-size: 0.95em;
+        }
+
+        .details-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        .details-table th,
+        .details-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .details-table th {
+            background: var(--color-bg);
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .risk-gauge {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .gauge-bar {
+            flex: 1;
+            height: 30px;
+            background: #e5e7eb;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .gauge-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #22c55e 0%, #f59e0b 50%, #ef4444 100%);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8em;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            background: #dcfce7;
+            color: #166534;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .result-prediction {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Predição de Churn de Clientes</h1>
+            <p class="subtitle">Analise o risco de perda de clientes com machine learning</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Formulário -->
+            <div class="card">
+                <h2>Dados do Cliente</h2>
+                <div class="error-message" id="errorMessage"></div>
+                
+                <form id="predictionForm">
+                    <!-- Informações Pessoais -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="creditScore">Pontuação de Crédito *</label>
+                            <input type="number" id="creditScore" name="creditScore" 
+                                   min="300" max="850" value="600" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="age">Idade (anos) *</label>
+                            <input type="number" id="age" name="age" 
+                                   min="18" max="100" value="40" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="gender">Gênero *</label>
+                            <select id="gender" name="gender" required>
+                                <option value="">Selecione...</option>
+                                <option value="Male">Masculino</option>
+                                <option value="Female">Feminino</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="geography">País/Região *</label>
+                            <select id="geography" name="geography" required>
+                                <option value="">Selecione...</option>
+                                <option value="France">França</option>
+                                <option value="Spain">Espanha</option>
+                                <option value="Germany">Alemanha</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Informações Financeiras -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="balance">Saldo Bancário ($) *</label>
+                            <input type="number" id="balance" name="balance" 
+                                   min="0" step="100" value="50000" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="estimatedSalary">Salário Estimado ($) *</label>
+                            <input type="number" id="estimatedSalary" name="estimatedSalary" 
+                                   min="0" step="100" value="100000" required>
+                        </div>
+                    </div>
+
+                    <!-- Informações de Conta -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tenure">Tempo como Cliente (anos) *</label>
+                            <input type="number" id="tenure" name="tenure" 
+                                   min="0" max="10" value="5" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="numOfProducts">Número de Produtos *</label>
+                            <input type="number" id="numOfProducts" name="numOfProducts" 
+                                   min="1" max="4" value="2" required>
+                        </div>
+                    </div>
+
+                    <!-- Comportamento -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="isActiveMember">Membro Ativo *</label>
+                            <select id="isActiveMember" name="isActiveMember" required>
+                                <option value="">Selecione...</option>
+                                <option value="1">Sim</option>
+                                <option value="0">Não</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="hasCrCard">Possui Cartão de Crédito *</label>
+                            <select id="hasCrCard" name="hasCrCard" required>
+                                <option value="">Selecione...</option>
+                                <option value="1">Sim</option>
+                                <option value="0">Não</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="complaint">Possui Reclamação *</label>
+                            <select id="complaint" name="complaint" required>
+                                <option value="">Selecione...</option>
+                                <option value="0">Não</option>
+                                <option value="1">Sim</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="satisfactionScore">Satisfação (1-5) *</label>
+                            <input type="number" id="satisfactionScore" name="satisfactionScore" 
+                                   min="1" max="5" value="3" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cardType">Tipo de Cartão *</label>
+                            <select id="cardType" name="cardType" required>
+                                <option value="">Selecione...</option>
+                                <option value="GOLD">GOLD</option>
+                                <option value="SILVER">SILVER</option>
+                                <option value="PLATINUM">PLATINUM</option>
+                                <option value="DIAMOND">DIAMOND</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="pointEarned">Pontos Acumulados *</label>
+                            <input type="number" id="pointEarned" name="pointEarned" 
+                                   min="0" step="10" value="500" required>
+                        </div>
+                    </div>
+
+                    <button type="submit">Fazer Previsão</button>
+                </form>
+
+                <div style="margin-top: 30px; border-top: 2px solid var(--color-border); padding-top: 20px;">
+                    <h3 style="margin-top: 0; font-size: 1.1em; color: var(--color-text);">Exemplos de Clientes</h3>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <p style="color: var(--color-text-light); font-size: 0.9em; margin: 0 0 12px 0; font-weight: 600;">Fizeram Churn (Alto Risco):</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                            <button type="button" onclick="loadExample(0)" style="background: var(--color-danger); margin: 0; padding: 10px; font-size: 0.85em;">Hargrave (42)</button>
+                            <button type="button" onclick="loadExample(1)" style="background: var(--color-danger); margin: 0; padding: 10px; font-size: 0.85em;">Hill (41)</button>
+                            <button type="button" onclick="loadExample(2)" style="background: var(--color-danger); margin: 0; padding: 10px; font-size: 0.85em;">Onio (42)</button>
+                            <button type="button" onclick="loadExample(3)" style="background: var(--color-danger); margin: 0; padding: 10px; font-size: 0.85em;">Chu (44)</button>
+                            <button type="button" onclick="loadExample(4)" style="background: var(--color-danger); margin: 0; padding: 10px; font-size: 0.85em;">Clements (45)</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p style="color: var(--color-text-light); font-size: 0.9em; margin: 0 0 12px 0; font-weight: 600;">Retidos (Baixo Risco):</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <button type="button" onclick="loadExample(5)" style="background: var(--color-success); margin: 0; padding: 10px; font-size: 0.85em;">Boni (39)</button>
+                            <button type="button" onclick="loadExample(6)" style="background: var(--color-success); margin: 0; padding: 10px; font-size: 0.85em;">Mitchell (43)</button>
+                            <button type="button" onclick="loadExample(7)" style="background: var(--color-success); margin: 0; padding: 10px; font-size: 0.85em;">Bartlett (50)</button>
+                            <button type="button" onclick="loadExample(8)" style="background: var(--color-success); margin: 0; padding: 10px; font-size: 0.85em;">He (44)</button>
+                            <button type="button" onclick="loadExample(9)" style="background: var(--color-success); margin: 0; padding: 10px; font-size: 0.85em;">H? (27)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resultado -->
+            <div class="card">
+                <h2>Resultado da Análise</h2>
+                <div class="result-container" id="resultContainer">
+                    <div class="result-box" id="resultBox">
+                        <div class="result-label" id="resultLabel">Resultado</div>
+                        <div class="result-prediction" id="resultPrediction">--</div>
+                        <div class="result-probability" id="resultProbability">--</div>
+                    </div>
+
+                    <div class="risk-gauge">
+                        <span style="font-weight: 600;">Risco de Churn (%):</span>
+                        <div class="gauge-bar">
+                            <div class="gauge-fill" id="gaugeFill"></div>
+                        </div>
+                    </div>
+
+                    <div id="insightsContainer">
+                        <!-- Insights serão inseridos aqui -->
+                    </div>
+
+                    <h3 style="margin-top: 25px; margin-bottom: 15px;">Detalhes do Cliente:</h3>
+                    <table class="details-table">
+                        <tbody id="detailsTable">
+                            <!-- Detalhes serão inseridos aqui -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="placeholderMessage" style="text-align: center; color: var(--color-text-light); padding: 40px 20px;">
+                    <p style="font-size: 3em; margin: 0;">[ ]</p>
+                    <p>Preencha o formulário e clique em "Fazer Previsão"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Modelo de machine learning simulado (substitua com seu modelo real)
+        function predictChurn(features) {
+            // Pesos baseados em padrões reais de churn bancário
+            let churnScore = 0;
+
+            // Fatores de risco aumentam o score
+            if (features.age > 60) churnScore += 0.15;
+            if (features.age < 30) churnScore += 0.08;
+            if (features.tenure < 2) churnScore += 0.20;
+            if (features.numOfProducts < 2) churnScore += 0.15;
+            if (features.isActiveMember === 0) churnScore += 0.25;
+            if (features.hasCrCard === 0) churnScore += 0.05;
+            if (features.complaint === 1) churnScore += 0.30;
+            if (features.satisfactionScore <= 2) churnScore += 0.20;
+            if (features.creditScore < 500) churnScore += 0.15;
+            if (features.balance === 0) churnScore += 0.10;
+
+            // Fatores de proteção reduzem o score
+            if (features.satisfactionScore >= 4) churnScore -= 0.15;
+            if (features.tenure > 5) churnScore -= 0.10;
+            if (features.isActiveMember === 1) churnScore -= 0.15;
+            if (features.numOfProducts >= 3) churnScore -= 0.10;
+            if (features.creditScore > 700) churnScore -= 0.10;
+
+            // Normalizar entre 0 e 1
+            const probability = Math.max(0, Math.min(1, churnScore));
+            const prediction = probability > 0.5 ? 1 : 0;
+
+            return {
+                prediction,
+                probability: (probability * 100).toFixed(1),
+                score: churnScore
+            };
+        }
+
+        function generateInsights(features, result) {
+            const insights = [];
+
+            if (features.age > 60) {
+                insights.push({
+                    type: 'warning',
+                    title: 'Idade Avançada',
+                    text: 'Clientes mais velhos têm histórico de churn ligeiramente maior. Considere programas especializados.'
+                });
+            }
+
+            if (features.complaint === 1) {
+                insights.push({
+                    type: 'danger',
+                    title: 'Reclamação Registrada',
+                    text: 'Existem reclamações registradas. Priorize acompanhamento para resolver problemas.'
+                });
+            }
+
+            if (features.satisfactionScore <= 2) {
+                insights.push({
+                    type: 'danger',
+                    title: 'Baixa Satisfação',
+                    text: 'Score de satisfação crítico. Ação imediata recomendada para melhorar experiência.'
+                });
+            }
+
+            if (features.tenure < 2) {
+                insights.push({
+                    type: 'warning',
+                    title: 'Cliente Novo',
+                    text: 'Clientes novos têm risco maior. Invista em onboarding e engajamento inicial.'
+                });
+            }
+
+            if (features.isActiveMember === 1 && features.satisfactionScore >= 4) {
+                insights.push({
+                    type: 'info',
+                    title: 'Cliente Leal',
+                    text: 'Excelente! Cliente ativo e satisfeito. Mantenha qualidade do serviço.'
+                });
+            }
+
+            if (features.balance === 0) {
+                insights.push({
+                    type: 'warning',
+                    title: 'Sem Saldo',
+                    text: 'Cliente sem saldo na conta. Considere campanhas de reengajamento.'
+                });
+            }
+
+            if (result.probability > 70) {
+                insights.push({
+                    type: 'danger',
+                    title: 'Alto Risco',
+                    text: 'Probabilidade alta de churn. Contato proativo é altamente recomendado.'
+                });
+            }
+
+            return insights;
+        }
+
+        function displayResult(features, result) {
+            const resultContainer = document.getElementById('resultContainer');
+            const placeholderMessage = document.getElementById('placeholderMessage');
+            const resultBox = document.getElementById('resultBox');
+            const resultLabel = document.getElementById('resultLabel');
+            const resultPrediction = document.getElementById('resultPrediction');
+            const resultProbability = document.getElementById('resultProbability');
+            const gaugeFill = document.getElementById('gaugeFill');
+            const insightsContainer = document.getElementById('insightsContainer');
+            const detailsTable = document.getElementById('detailsTable');
+
+            // Atualizar caixa de resultado
+            const isChurn = result.prediction === 1;
+            resultBox.classList.remove('churn', 'no-churn');
+            resultBox.classList.add(isChurn ? 'churn' : 'no-churn');
+            
+            resultLabel.textContent = isChurn ? 'RISCO DE SAÍDA' : 'CLIENTE RETIDO';
+            resultPrediction.textContent = isChurn ? 'CHURN' : 'RETENÇÃO';
+            resultProbability.textContent = `${result.probability}% de probabilidade`;
+
+            // Atualizar gauge
+            const probability = parseFloat(result.probability);
+            gaugeFill.style.width = `${probability}%`;
+            gaugeFill.textContent = `${result.probability}%`;
+
+            // Gerar e exibir insights
+            const insights = generateInsights(features, result);
+            insightsContainer.innerHTML = insights.map(insight => `
+                <div class="insight ${insight.type}">
+                    <div class="insight-title">${insight.title}</div>
+                    <div class="insight-text">${insight.text}</div>
+                </div>
+            `).join('');
+
+            // Preencher tabela de detalhes
+            const details = [
+                ['Pontuação de Crédito', features.creditScore],
+                ['Idade', `${features.age} anos`],
+                ['Tempo como Cliente', `${features.tenure} anos`],
+                ['Saldo', `$${features.balance.toLocaleString()}`],
+                ['Salário Estimado', `$${features.estimatedSalary.toLocaleString()}`],
+                ['Produtos', features.numOfProducts],
+                ['Membro Ativo', features.isActiveMember ? 'Sim' : 'Não'],
+                ['Reclamação', features.complaint ? 'Sim' : 'Não'],
+                ['Satisfação', `${features.satisfactionScore}/5`]
+            ];
+
+            detailsTable.innerHTML = details.map(([label, value]) => `
+                <tr>
+                    <td style="font-weight: 600; width: 50%;">${label}</td>
+                    <td>${value}</td>
+                </tr>
+            `).join('');
+
+            // Mostrar resultado, esconder placeholder
+            resultContainer.classList.add('show');
+            placeholderMessage.style.display = 'none';
+        }
+
+        document.getElementById('predictionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const features = {
+                creditScore: parseInt(document.getElementById('creditScore').value),
+                age: parseInt(document.getElementById('age').value),
+                gender: document.getElementById('gender').value,
+                geography: document.getElementById('geography').value,
+                balance: parseFloat(document.getElementById('balance').value),
+                estimatedSalary: parseFloat(document.getElementById('estimatedSalary').value),
+                tenure: parseInt(document.getElementById('tenure').value),
+                numOfProducts: parseInt(document.getElementById('numOfProducts').value),
+                isActiveMember: parseInt(document.getElementById('isActiveMember').value),
+                hasCrCard: parseInt(document.getElementById('hasCrCard').value),
+                complaint: parseInt(document.getElementById('complaint').value),
+                satisfactionScore: parseInt(document.getElementById('satisfactionScore').value),
+                cardType: document.getElementById('cardType').value,
+                pointEarned: parseInt(document.getElementById('pointEarned').value)
+            };
+
+            // Validação básica
+            const errorMessage = document.getElementById('errorMessage');
+            if (features.age < 18 || features.age > 100) {
+                errorMessage.textContent = '❌ Idade inválida (deve estar entre 18 e 100)';
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            errorMessage.classList.remove('show');
+
+            // Fazer previsão
+            const result = predictChurn(features);
+            displayResult(features, result);
+        });
+
+        // Limpar mensagem de erro ao interagir com o formulário
+        document.getElementById('predictionForm').addEventListener('input', function() {
+            document.getElementById('errorMessage').classList.remove('show');
+        });
+
+        // Exemplos de clientes reais que fizeram churn e não fizeram churn
+        const churnExamples = [
+            // 🚨 CLIENTES QUE FIZERAM CHURN
+            {
+                name: "Hargrave",
+                creditScore: 619,
+                age: 42,
+                gender: "Female",
+                geography: "France",
+                balance: 0,
+                estimatedSalary: 101348.88,
+                tenure: 2,
+                numOfProducts: 1,
+                isActiveMember: 1,
+                hasCrCard: 1,
+                complaint: 1,
+                satisfactionScore: 2,
+                cardType: "DIAMOND",
+                pointEarned: 464,
+                reason: "Saldo zero + Reclamação + Baixa satisfação",
+                status: "churn"
+            },
+            {
+                name: "Hill",
+                creditScore: 608,
+                age: 41,
+                gender: "Female",
+                geography: "Spain",
+                balance: 83807.86,
+                estimatedSalary: 112542.58,
+                tenure: 1,
+                numOfProducts: 1,
+                isActiveMember: 1,
+                hasCrCard: 0,
+                complaint: 1,
+                satisfactionScore: 3,
+                cardType: "DIAMOND",
+                pointEarned: 456,
+                reason: "Cliente NOVO (1 ano) + Sem cartão + Reclamação",
+                status: "churn"
+            },
+            {
+                name: "Onio",
+                creditScore: 502,
+                age: 42,
+                gender: "Female",
+                geography: "France",
+                balance: 159660.8,
+                estimatedSalary: 113931.57,
+                tenure: 8,
+                numOfProducts: 3,
+                isActiveMember: 0,
+                hasCrCard: 1,
+                complaint: 1,
+                satisfactionScore: 3,
+                cardType: "DIAMOND",
+                pointEarned: 377,
+                reason: "Membro INATIVO + Crédito baixo + Reclamação",
+                status: "churn"
+            },
+            {
+                name: "Chu",
+                creditScore: 645,
+                age: 44,
+                gender: "Male",
+                geography: "Spain",
+                balance: 113755.78,
+                estimatedSalary: 149756.71,
+                tenure: 8,
+                numOfProducts: 2,
+                isActiveMember: 0,
+                hasCrCard: 1,
+                complaint: 1,
+                satisfactionScore: 5,
+                cardType: "DIAMOND",
+                pointEarned: 484,
+                reason: "Paradoxo: Excelente satisfação mas INATIVO + Reclamação",
+                status: "churn"
+            },
+            {
+                name: "Clements",
+                creditScore: 722,
+                age: 45,
+                gender: "Female",
+                geography: "Spain",
+                balance: 134264.04,
+                estimatedSalary: 27822.99,
+                tenure: 0,
+                numOfProducts: 1,
+                isActiveMember: 0,
+                hasCrCard: 1,
+                complaint: 1,
+                satisfactionScore: 1,
+                cardType: "DIAMOND",
+                pointEarned: 877,
+                reason: "Cliente NOVO (0 anos) + Inativo + Satisfação MÍNIMA",
+                status: "churn"
+            },
+            // ✅ CLIENTES QUE NÃO FIZERAM CHURN
+            {
+                name: "Boni",
+                creditScore: 699,
+                age: 39,
+                gender: "Female",
+                geography: "France",
+                balance: 0,
+                estimatedSalary: 93826.63,
+                tenure: 1,
+                numOfProducts: 2,
+                isActiveMember: 0,
+                hasCrCard: 0,
+                complaint: 0,
+                satisfactionScore: 5,
+                cardType: "GOLD",
+                pointEarned: 350,
+                reason: "Excelente satisfação + Sem reclamações = Retenção",
+                status: "retained"
+            },
+            {
+                name: "Mitchell",
+                creditScore: 850,
+                age: 43,
+                gender: "Female",
+                geography: "Spain",
+                balance: 125510.82,
+                estimatedSalary: 79084.10,
+                tenure: 2,
+                numOfProducts: 1,
+                isActiveMember: 1,
+                hasCrCard: 1,
+                complaint: 0,
+                satisfactionScore: 5,
+                cardType: "GOLD",
+                pointEarned: 425,
+                reason: "Alto crédito + Ativa + Satisfação máxima",
+                status: "retained"
+            },
+            {
+                name: "Bartlett",
+                creditScore: 822,
+                age: 50,
+                gender: "Male",
+                geography: "France",
+                balance: 0,
+                estimatedSalary: 10062.80,
+                tenure: 7,
+                numOfProducts: 2,
+                isActiveMember: 1,
+                hasCrCard: 1,
+                complaint: 0,
+                satisfactionScore: 2,
+                cardType: "SILVER",
+                pointEarned: 206,
+                reason: "7 anos de loyalidade + Membro ativo + Sem reclamações",
+                status: "retained"
+            },
+            {
+                name: "He",
+                creditScore: 501,
+                age: 44,
+                gender: "Male",
+                geography: "France",
+                balance: 142051.07,
+                estimatedSalary: 74940.50,
+                tenure: 4,
+                numOfProducts: 2,
+                isActiveMember: 1,
+                hasCrCard: 0,
+                complaint: 0,
+                satisfactionScore: 3,
+                cardType: "GOLD",
+                pointEarned: 251,
+                reason: "Bom saldo + Ativo + Sem reclamações + Múltiplos produtos",
+                status: "retained"
+            },
+            {
+                name: "H?",
+                creditScore: 684,
+                age: 27,
+                gender: "Male",
+                geography: "France",
+                balance: 134603.88,
+                estimatedSalary: 71725.73,
+                tenure: 2,
+                numOfProducts: 1,
+                isActiveMember: 1,
+                hasCrCard: 1,
+                complaint: 0,
+                satisfactionScore: 3,
+                cardType: "GOLD",
+                pointEarned: 342,
+                reason: "Jovem + Ativo + Alto saldo + Sem reclamações",
+                status: "retained"
+            }
+        ];
+
+        function loadExample(index) {
+            const example = churnExamples[index];
+            
+            document.getElementById('creditScore').value = example.creditScore;
+            document.getElementById('age').value = example.age;
+            document.getElementById('gender').value = example.gender;
+            document.getElementById('geography').value = example.geography;
+            document.getElementById('balance').value = example.balance;
+            document.getElementById('estimatedSalary').value = example.estimatedSalary;
+            document.getElementById('tenure').value = example.tenure;
+            document.getElementById('numOfProducts').value = example.numOfProducts;
+            document.getElementById('isActiveMember').value = example.isActiveMember;
+            document.getElementById('hasCrCard').value = example.hasCrCard;
+            document.getElementById('complaint').value = example.complaint;
+            document.getElementById('satisfactionScore').value = example.satisfactionScore;
+            document.getElementById('cardType').value = example.cardType;
+            document.getElementById('pointEarned').value = example.pointEarned;
+
+            // Auto-submit
+            setTimeout(() => {
+                document.getElementById('predictionForm').dispatchEvent(new Event('submit'));
+            }, 100);
+
+            // Scroll para resultado
+            setTimeout(() => {
+                document.querySelector('.result-container').scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
+    </script>
+</body>
+</html>
