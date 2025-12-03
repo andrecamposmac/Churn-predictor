@@ -347,6 +347,7 @@ Para dúvidas sobre o projeto:
 - Verifique o arquivo de configuração do modelo para hiperparâmetros
 - Revise a matriz de confusão para entender tipos de erros
 
+Email de contato: andrecamposmac@gmail.com
 ---
 
 ## Licença
