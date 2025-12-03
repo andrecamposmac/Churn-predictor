@@ -270,7 +270,7 @@ X_novo_scaled = scaler.transform(X_novo)
 ## Próximos Passos Recomendados
 
 ### Curto Prazo
-1. ✅ **Documentação** (você está aqui!)
+1. **Documentação** (você está aqui!)
 2. **Validação Robusta**: Implementar k-fold cross-validation estratificado
 3. **Análise de Explainabilidade**: SHAP values, feature importance
 4. **API REST**: Criar endpoint para servir previsões
