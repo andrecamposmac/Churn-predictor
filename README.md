@@ -314,7 +314,7 @@ X_novo_scaled = scaler.transform(X_novo)
 
 ---
 
-## Reproducibilidade
+## Reprodutibilidade
 
 ### Seeds Fixadas
 
