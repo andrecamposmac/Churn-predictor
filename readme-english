@@ -1,0 +1,363 @@
+# Banking Customer Churn Prediction
+
+## Overview
+
+This project implements a **machine learning model to predict customer churn from a bank**. The goal is to identify high-risk customers likely to leave the bank so retention actions can be implemented proactively.
+
+**Dataset**: Customer-Churn-Records.csv (10,000 records, 18 columns)  
+**Problem Type**: Binary Classification (Churn vs. Non-Churn)  
+**Selected Model**: Artificial Neural Network (TensorFlow/Keras)
+
+***
+
+## Results Achieved
+
+| Metric | Neural Network | Logistic Regression | Random Forest |
+|---------|-----------|----------------------|---------------|
+| **AUC-ROC** | **0.9986** | 0.9990 | 0.9990 |
+| **F1-Score** | **0.9967** | - | - |
+| **Accuracy** | 99.71% | - | - |
+| **Sensitivity (Recall)** | 99.67% | - | - |
+
+The neural network achieves exceptional performance, with virtually no errors in both classes (only 4 errors in 3,000 test samples: 2 false positives and 2 false negatives).
+
+***
+
+## Project Structure
+
+```
+├── 01-analise_exploratoria.ipynb          # Initial data exploration
+├── 02-pre-processamento_dos_dados.ipynb   # Cleaning and transformation
+├── 03-modelagem_preditiva.ipynb          # Training of 10 models
+├── modelo_neural_network.keras            # Trained model (Keras)
+├── scaler.pkl                             # Serialized StandardScaler
+├── requirements.txt                       # Project dependencies
+├── README.md                              # This file
+└── data/
+    ├── Customer-Churn-Records.csv         # Original dataset
+    ├── customer_churn_processed.csv       # Processed dataset
+    ├── X_features.csv                     # Features (17 columns)
+    └── y_target.csv                       # Target (Exited)
+```
+
+***
+
+## Data
+
+### Original Dataset
+- **Size**: 10,000 records
+- **Columns**: 18 (including ID, name, demographic, financial and behavioral data)
+- **Target**: `Exited` (1 = churn, 0 = retains)
+- **Imbalance**: ~20% churn, ~80% retention
+
+### Preprocessing Performed
+
+1. **Removal of irrelevant columns**: RowNumber, CustomerId, Surname
+2. **One-Hot Encoding**:
+   - Geography (3 countries): 2 dummies created
+   - Gender (2 genders): 1 dummy created
+   - Card Type (4 types): 3 dummies created
+3. **Final Features**: 17 numeric features + 1 target
+4. **Normalization**: StandardScaler applied to training set
+
+### Features Used
+
+| Feature | Description |
+|---------|-----------|
+| CreditScore | Credit score (300-850) |
+| Age | Customer age (years) |
+| Tenure | Time as customer (years) |
+| Balance | Account balance (USD) |
+| NumOfProducts | Number of financial products |
+| HasCrCard | Has credit card (0/1) |
+| IsActiveMember | Active member (0/1) |
+| EstimatedSalary | Estimated salary (USD) |
+| Complain | Previous complaint (0/1) |
+| Satisfaction Score | Satisfaction level (1-5) |
+| Point Earned | Accumulated points |
+| Geography_Germany | Location = Germany (0/1) |
+| Geography_Spain | Location = Spain (0/1) |
+| Gender_Male | Gender = Male (0/1) |
+| Card Type_Gold | Card type = Gold (0/1) |
+| Card Type_Platinum | Card type = Platinum (0/1) |
+| Card Type_Silver | Card type = Silver (0/1) |
+
+***
+
+## Model Architecture
+
+### Selected Model: Artificial Neural Network
+
+```
+Input Layer: 17 features
+
+Dense(64, relu) + BatchNormalization + Dropout(0.3)
+    ↓
+Dense(32, relu) + BatchNormalization + Dropout(0.2)
+    ↓
+Dense(16, relu)
+    ↓
+Dense(8, relu)
+    ↓
+Dense(1, sigmoid) → Churn Probability
+```
+
+### Hyperparameters
+
+- **Optimizer**: Adam (learning_rate=0.0005)
+- **Loss Function**: Binary Crossentropy
+- **Metrics**: Accuracy, AUC-ROC
+- **Epochs**: 100 (with Early Stopping)
+- **Batch Size**: 32
+- **Validation**: 20% of training set
+- **Regularization**: L2 (0.001) + Dropout + BatchNormalization
+- **Early Stopping**: Patience=15 epochs, monitoring val_auc
+
+### Selection Justification
+
+**10 different models were tested** during the modeling phase:
+
+- Logistic Regression (AUC=0.999)
+- Decision Tree (AUC=0.994)
+- Random Forest (AUC=0.999)
+- Gradient Boosting (AUC=0.999)
+- AdaBoost (AUC=0.998)
+- XGBoost (AUC=0.998)
+- LightGBM (AUC=0.998)
+- SVM RBF (AUC=0.997)
+- KNN (AUC=0.998)
+- Naive Bayes (AUC=0.999)
+- **Neural Network (AUC=0.9986)** ← Selected
+
+The neural network was chosen for presenting the best balance between performance (AUC very close to the best), ability to capture complex patterns and potential for generalization with new data.
+
+***
+
+## How to Use
+
+### 1. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Train the Model
+
+Execute the notebooks in sequence:
+
+```bash
+jupyter notebook 01-analise_exploratoria.ipynb
+jupyter notebook 02-pre-processamento_dos_dados.ipynb
+jupyter notebook 03-modelagem_preditiva.ipynb
+```
+
+### 3. Make Predictions
+
+```python
+import tensorflow as tf
+import pickle
+import pandas as pd
+
+# Load model and scaler
+model = tf.keras.models.load_model('modelo_neural_network.keras')
+scaler = pickle.load(open('scaler.pkl', 'rb'))
+
+# New customer data (17 features)
+new_customer = pd.DataFrame({...})  # 17 features
+
+# Normalize with training scaler
+new_customer_scaled = scaler.transform(new_customer)
+
+# Make prediction
+churn_probability = model.predict(new_customer_scaled)
+classification = "Churn" if churn_probability[0][0] > 0.5 else "Retains"
+```
+
+### 4. Evaluate Model
+
+```python
+# In notebook 03-modelagem_preditiva.ipynb
+
+# Test set metrics
+print(f"AUC-ROC: {auc_roc:.4f}")
+print(f"F1-Score: {f1:.4f}")
+print(f"Confusion Matrix:\n{cm}")
+
+# ROC Curve
+from sklearn.metrics import roc_curve
+import matplotlib.pyplot as plt
+
+fpr, tpr, _ = roc_curve(y_test, y_pred_proba)
+plt.plot(fpr, tpr)
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("ROC Curve")
+plt.show()
+```
+
+***
+
+## Metrics and Interpretation
+
+### Confusion Matrix (Test Set)
+
+```
+               Predicted Non-Churn    Predicted Churn
+Actual Non-Churn    2,387                 2
+Actual Churn            2                609
+```
+
+- **True Negatives (TN)**: 2,387 customers correctly identified as non-churn
+- **False Positives (FP)**: 2 customers incorrectly predicted as churn
+- **False Negatives (FN)**: 2 customers who churned but were predicted as non-churn
+- **True Positives (TP)**: 609 customers correctly identified as churn
+
+### Metrics Interpretation
+
+| Metric | Value | Interpretation |
+|---------|-------|---------------|
+| **Accuracy** | 99.71% | Of 3,000 predictions, 99.71% were correct |
+| **Precision (Churn)** | 99.67% | Of 611 predicted as churn, 609 actually churned |
+| **Recall (Sensitivity)** | 99.67% | Of 611 who actually churned, 609 were identified |
+| **F1-Score** | 0.9967 | Excellent balance between precision and recall |
+| **AUC-ROC** | 0.9986 | Model differentiates very well between classes (1.0 = perfect) |
+
+***
+
+## Learning Curve
+
+During training, the neural network showed:
+
+- **Epoch 1**: Val Loss=0.4571, Val AUC=0.9941
+- **Epoch 2**: Val Loss=0.0959, Val AUC=0.9987
+- **Epoch 3**: Val Loss=0.0467, Val AUC=0.9990
+- **Convergence**: ~18 epochs (early stopping prevented overfitting)
+
+The rapid convergence indicates a well-defined problem and high-quality data.
+
+***
+
+## Artifact Files
+
+### modelo_neural_network.keras
+
+Serialized trained model file in Keras format (TensorFlow standard). Approximate size: 50 KB.
+
+**How to load:**
+```python
+import tensorflow as tf
+model = tf.keras.models.load_model('modelo_neural_network.keras')
+```
+
+### scaler.pkl
+
+StandardScaler serialized via pickle. Contains mean and standard deviation of each feature learned from training set.
+
+**Why save:**
+- Ensures new data is normalized exactly like training
+- Essential for production reproducibility
+- Avoids data leakage
+
+**How to load:**
+```python
+import pickle
+scaler = pickle.load(open('scaler.pkl', 'rb'))
+X_new_scaled = scaler.transform(X_new)
+```
+
+***
+
+## Recommended Next Steps
+
+### Short Term
+1. **Documentation** (you're here!)
+2. **Robust Validation**: Implement stratified k-fold cross-validation
+3. **Explainability Analysis**: SHAP values, feature importance
+4. **REST API**: Create endpoint to serve predictions
+
+### Medium Term
+5. **A/B Testing**: Validate production performance with real data
+6. **Monitoring**: Implement data drift detection
+7. **Retraining**: Create automatic pipeline when performance degrades
+
+### Long Term
+8. **Business Optimization**: Calculate ROI of retention campaigns
+9. **Ensemble**: Combine multiple models for robustness
+10. **Deployment**: Containerize with Docker and serve on Kubernetes
+
+***
+
+## Known Limitations
+
+1. **Production Balanced Dataset**: This model was trained with ~20% churn. If distribution changes significantly, performance may degrade.
+
+2. **Synthetic Data**: Dataset apparently contains synthetic information, affecting generalization.
+
+3. **Static Features**: Model doesn't capture temporal evolution of customer behavior.
+
+4. **No Macro Context**: Doesn't include external factors (economy, competition, etc).
+
+5. **Fixed Threshold**: Uses 0.5 as cutoff point. Can be optimized according to business objectives.
+
+***
+
+## Dependencies
+
+| Package | Version | Purpose |
+|--------|--------|----------|
+| pandas | 1.5+ | Data manipulation |
+| numpy | 1.20+ | Numerical operations |
+| scikit-learn | 1.0+ | Preprocessing, metrics |
+| tensorflow | 2.11+ | Neural network, Keras |
+| matplotlib | 3.5+ | Visualizations |
+| seaborn | 0.12+ | Advanced visualizations |
+
+***
+
+## Reproducibility
+
+### Fixed Seeds
+
+To ensure reproducibility, seeds were fixed at:
+
+- `random_state=42` (sklearn)
+- `random_seed=42` (XGBoost, LightGBM)
+- `seed=42` (TensorFlow - under development)
+
+```python
+# In notebook, at the beginning:
+import tensorflow as tf
+tf.random.set_seed(42)
+import numpy as np
+np.random.seed(42)
+import random
+random.seed(42)
+```
+
+### Exact Versions
+
+See `requirements.txt` for exact versions of all dependencies.
+
+***
+
+## Contact and Support
+
+For questions about the project:
+- Consult notebooks for technical details
+- Check model configuration file for hyperparameters
+- Review confusion matrix to understand error types
+
+Contact email: andrecamposmac@gmail.com
+***
+
+## License
+
+This project is for educational and research purposes.
+
+***
+
+**Last Update**: November 2025  
+**Model Version**: 1.0  
+**Status**: Production Ready (with recommended monitoring precautions)
+
+[1](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/73677613/5d1d1351-6b1c-4a50-ac6d-78bff05fbe0a/README-5.md)
