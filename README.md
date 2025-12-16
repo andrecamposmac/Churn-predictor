@@ -267,40 +267,6 @@ X_novo_scaled = scaler.transform(X_novo)
 
 ---
 
-## Próximos Passos Recomendados
-
-### Curto Prazo
-1. **Documentação** (você está aqui!)
-2. **Validação Robusta**: Implementar k-fold cross-validation estratificado
-3. **Análise de Explainabilidade**: SHAP values, feature importance
-4. **API REST**: Criar endpoint para servir previsões
-
-### Médio Prazo
-5. **Teste A/B**: Validar performance em produção com dados reais
-6. **Monitoramento**: Implementar data drift detection
-7. **Retrainamento**: Criar pipeline automático quando performance degradar
-
-### Longo Prazo
-8. **Otimização de Negócio**: Calcular ROI de campanhas de retenção
-9. **Ensemble**: Combinar múltiplos modelos para robustez
-10. **Deployment**: Containerizar com Docker e servir em Kubernetes
-
----
-
-## Limitações Conhecidas
-
-1. **Dataset Balanceado em Produção**: Este modelo foi treinado com ~20% de churn. Se a distribuição mudar significativamente, performance pode degradar.
-
-2. **Dados Sintéticos**: Aparentemente o dataset pode conter informações sintéticas, o que afeta a generalização.
-
-3. **Features Estáticas**: O modelo não captura a evolução temporal do comportamento do cliente.
-
-4. **Sem Contexto Macro**: Não inclui fatores externos (economia, competição, etc).
-
-5. **Threshold Fixo**: Utiliza 0.5 como ponto de corte. Pode ser otimizado conforme objetivos de negócio.
-
----
-
 ## Dependências
 
 | Pacote | Versão | Propósito |
@@ -340,15 +306,6 @@ Ver `requirements.txt` para versões exatas de todas as dependências.
 
 ---
 
-## Contato e Suporte
-
-Para dúvidas sobre o projeto:
-- Consulte os notebooks para detalhes técnicos
-- Verifique o arquivo de configuração do modelo para hiperparâmetros
-- Revise a matriz de confusão para entender tipos de erros
-
----
-
 ## Licença
 
 Este projeto é para fins educacionais.
@@ -356,5 +313,3 @@ Este projeto é para fins educacionais.
 ---
 
 **Última Atualização**: Novembro de 2025  
-**Versão do Modelo**: 1.0  
-**Status**: Pronto para Produção (com precauções recomendadas no monitoramento)
